@@ -1,10 +1,10 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from sympy import Symbol, sympify, integrate, diff, simplify, latex
 from sympy.parsing.sympy_parser import parse_expr
-from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=["https://juanhev3.github.io"])
 
 @app.route("/calculate", methods=["POST"])
 def calculate():
@@ -13,7 +13,6 @@ def calculate():
         expr_text = data.get("expression", "").strip()
         x = Symbol('x')
 
-        # Handle integrate
         if expr_text.startswith("integrate(") and expr_text.endswith(")"):
             inner = expr_text[len("integrate("):-1]
             parts = [s.strip() for s in inner.split(",")]
@@ -24,7 +23,6 @@ def calculate():
             result = integrate(expr, var)
             rendered_input = f"\\int {latex(expr)} \\, d{latex(var)}"
 
-        # Handle diff
         elif expr_text.startswith("diff(") and expr_text.endswith(")"):
             inner = expr_text[len("diff("):-1]
             parts = [s.strip() for s in inner.split(",")]
@@ -35,7 +33,6 @@ def calculate():
             result = diff(expr, var)
             rendered_input = f"\\frac{{d}}{{d{latex(var)}}}\\left({latex(expr)}\\right)"
 
-        # Handle d/dx shortcut
         elif expr_text.startswith("d/dx(") and expr_text.endswith(")"):
             inner = expr_text[len("d/dx("):-1]
             expr = parse_expr(inner)
@@ -43,7 +40,6 @@ def calculate():
             rendered_input = f"\\frac{{d}}{{dx}}\\left({latex(expr)}\\right)"
 
         else:
-            # Simplify normal expressions
             expr = parse_expr(expr_text)
             result = simplify(expr)
             rendered_input = latex(expr)
@@ -59,6 +55,5 @@ def calculate():
             "output": f"<span style='color:red;'>Error: {str(e)}</span>"
         }), 400
 
-# ✅ FIX FOR RENDER DEPLOYMENT
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
